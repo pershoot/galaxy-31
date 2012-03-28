@@ -617,7 +617,9 @@ static int tegra_usb_suspend(struct usb_hcd *hcd, bool is_dpd)
 static int tegra_usb_resume(struct usb_hcd *hcd, bool is_dpd)
 {
 	struct tegra_ehci_hcd *tegra = dev_get_drvdata(hcd->self.controller);
+#if defined CONFIG_LINK_DEVICE_HSIC
 	struct usb_device *udev = hcd->self.root_hub;
+#endif
 	struct ehci_hcd	*ehci = hcd_to_ehci(hcd);
 	struct ehci_regs __iomem *hw = ehci->regs;
 	unsigned long val;
