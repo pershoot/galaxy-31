@@ -1039,7 +1039,7 @@ static int __devinit sdhci_tegra_probe(struct platform_device *pdev)
 		if (IS_ERR_OR_NULL(tegra_host->vdd_io_reg)) {
 			dev_info(mmc_dev(host->mmc), "%s regulator not found: %ld."
 				"Assuming vddio_sdmmc is not required.\n",
-				"vddio_sdmmc", PTR_ERR(tegra_host->vdd_io_reg));
+					"vddio_sdmmc", PTR_ERR(tegra_host->vdd_io_reg));
 			tegra_host->vdd_io_reg = NULL;
 		} else {
 			rc = regulator_set_voltage(tegra_host->vdd_io_reg,
@@ -1055,7 +1055,7 @@ static int __devinit sdhci_tegra_probe(struct platform_device *pdev)
 		if (IS_ERR_OR_NULL(tegra_host->vdd_slot_reg)) {
 			dev_info(mmc_dev(host->mmc), "%s regulator not found: %ld."
 				" Assuming vddio_sd_slot is not required.\n",
-				"vddio_sd_slot", PTR_ERR(tegra_host->vdd_slot_reg));
+					"vddio_sd_slot", PTR_ERR(tegra_host->vdd_slot_reg));
 			tegra_host->vdd_slot_reg = NULL;
 		}
 
