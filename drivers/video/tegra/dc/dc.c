@@ -3178,17 +3178,6 @@ static int tegra_dc_probe(struct nvhost_device *ndev)
 		dc->ext = NULL;
 	}
 
-	/* interrupt handler must be registered before tegra_fb_register() */
-	if (request_irq(irq, tegra_dc_irq, IRQF_DISABLED,
-			dev_name(&ndev->dev), dc)) {
-		dev_err(&ndev->dev, "request_irq %d failed\n", irq);
-		ret = -EBUSY;
-		goto err_put_emc_clk;
-	}
-
-	/* hack to balance enable_irq calls in _tegra_dc_enable() */
-	disable_dc_irq(dc->irq);
-
 	mutex_lock(&dc->lock);
 #ifdef CONFIG_MACH_SAMSUNG_VARIATION_TEGRA	
 	if (dc->pdata->flags & TEGRA_DC_FLAG_ENABLED)
@@ -3196,8 +3185,16 @@ static int tegra_dc_probe(struct nvhost_device *ndev)
 #else
 	if (dc->pdata->flags & TEGRA_DC_FLAG_ENABLED)
 		dc->enabled = _tegra_dc_enable(dc);
-#endif		
+#endif
 	mutex_unlock(&dc->lock);
+
+	/* interrupt handler must be registered before tegra_fb_register() */
+	if (request_irq(irq, tegra_dc_irq, IRQF_DISABLED,
+			dev_name(&ndev->dev), dc)) {
+		dev_err(&ndev->dev, "request_irq %d failed\n", irq);
+		ret = -EBUSY;
+		goto err_put_emc_clk;
+	}
 
 	tegra_dc_create_debugfs(dc);
 
