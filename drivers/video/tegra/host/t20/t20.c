@@ -65,17 +65,15 @@ struct nvhost_device t20_devices[] = {
 },
 {
 	/* channel 1 */
-	.name	       = "gr3d",
-	.id            = -1,
+	.name		= "gr3d01",
+	.id		= -1,
 	.index		= 1,
-	.syncpts       = BIT(NVSYNCPT_3D),
-	.waitbases     = BIT(NVWAITBASE_3D),
-	.modulemutexes = BIT(NVMODMUTEX_3D),
-	.class	       = NV_GRAPHICS_3D_CLASS_ID,
-	.prepare_poweroff = nvhost_gr3d_prepare_power_off,
-	.alloc_hwctx_handler = nvhost_gr3d_t20_ctxhandler_init,
-	.clocks = {{"gr3d", UINT_MAX}, {"emc", UINT_MAX}, {} },
-	.powergate_ids = {TEGRA_POWERGATE_3D, -1},
+	.syncpts	= BIT(NVSYNCPT_3D),
+	.waitbases	= BIT(NVWAITBASE_3D),
+	.modulemutexes	= BIT(NVMODMUTEX_3D),
+	.class		= NV_GRAPHICS_3D_CLASS_ID,
+	.clocks 	= {{"gr3d", UINT_MAX}, {"emc", UINT_MAX}, {} },
+	.powergate_ids	= {TEGRA_POWERGATE_3D, -1},
 	NVHOST_DEFAULT_CLOCKGATE_DELAY,
 	.moduleid      = NVHOST_MODULE_NONE,
 },
@@ -122,17 +120,15 @@ struct nvhost_device t20_devices[] = {
 },
 {
 	/* channel 5 */
-	.name	       = "mpe",
-	.id            = -1,
+	.name		= "mpe01",
+	.id		= -1,
 	.index		= 5,
-	.syncpts       = BIT(NVSYNCPT_MPE) | BIT(NVSYNCPT_MPE_EBM_EOF) |
-			 BIT(NVSYNCPT_MPE_WR_SAFE),
-	.waitbases     = BIT(NVWAITBASE_MPE),
-	.class	       = NV_VIDEO_ENCODE_MPEG_CLASS_ID,
-	.waitbasesync  = true,
-	.keepalive     = true,
-	.prepare_poweroff = nvhost_mpe_prepare_power_off,
-	.alloc_hwctx_handler = nvhost_mpe_ctxhandler_init,
+	.syncpts	= BIT(NVSYNCPT_MPE) | BIT(NVSYNCPT_MPE_EBM_EOF) |
+			  BIT(NVSYNCPT_MPE_WR_SAFE),
+	.waitbases	= BIT(NVWAITBASE_MPE),
+	.class		= NV_VIDEO_ENCODE_MPEG_CLASS_ID,
+	.waitbasesync	= true,
+	.keepalive	= true,
 	.clocks		= { {"mpe", UINT_MAX},
 			    {"emc", UINT_MAX} },
 	.powergate_ids = {TEGRA_POWERGATE_MPE, -1},
@@ -166,9 +162,10 @@ static inline int t20_nvhost_hwctx_handler_init(struct nvhost_channel *ch)
 	unsigned long waitbases = ch->dev->waitbases;
 	u32 syncpt = find_first_bit(&syncpts, BITS_PER_LONG);
 	u32 waitbase = find_first_bit(&waitbases, BITS_PER_LONG);
+	struct nvhost_driver *drv = to_nvhost_driver(ch->dev->dev.driver);
 
-	if (ch->dev->alloc_hwctx_handler) {
-		ch->ctxhandler = ch->dev->alloc_hwctx_handler(syncpt,
+	if (drv->alloc_hwctx_handler) {
+		ch->ctxhandler = drv->alloc_hwctx_handler(syncpt,
 				waitbase, ch);
 		if (!ch->ctxhandler)
 			err = -ENOMEM;
@@ -215,7 +212,7 @@ struct nvhost_device *t20_get_nvhost_device(char *name)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(t20_devices); i++) {
-		if (strcmp(t20_devices[i].name, name) == 0)
+		if (strncmp(t20_devices[i].name, name, strlen(name)) == 0)
 			return &t20_devices[i];
 	}
 
