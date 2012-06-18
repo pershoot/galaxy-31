@@ -42,11 +42,6 @@
 #include <mach/legacy_irq.h>
 #include <linux/nvmap.h>
 
-#include "../../../../video/tegra/nvmap/nvmap.h"
-#include "../../../../video/tegra/host/host1x/host1x_syncpt.h"
-#include "../../../../video/tegra/host/dev.h"
-#include "../../../../video/tegra/host/nvhost_acm.h"
-
 #if defined(CONFIG_TEGRA_AVP_KERNEL_ON_MMU)
 #include "../avp/headavp.h"
 #endif
@@ -111,7 +106,6 @@ struct nvavp_info {
 
 	struct nv_e276_control		*os_control;
 
-	struct nvhost_syncpt		*nvhost_syncpt;
 	u32				syncpt_id;
 	u32				syncpt_value;
 
@@ -147,8 +141,8 @@ static struct clk *nvavp_clk_get(struct nvavp_info *nvavp, int id)
 
 static void nvavp_clk_ctrl(struct nvavp_info *nvavp, u32 clk_en)
 {
-	if (clk_en && !nvavp->clk_enabled) {
-		nvhost_module_busy(nvhost_get_host(nvavp->nvhost_dev)->dev);
+	if (nvavp->clk_enabled++ == 0) {
+		nvhost_module_busy_ext(nvhost_get_parent(nvavp->nvhost_dev));
 		clk_enable(nvavp->bsev_clk);
 		clk_enable(nvavp->vde_clk);
 		clk_set_rate(nvavp->emc_clk, nvavp->emc_clk_rate);
@@ -163,8 +157,7 @@ static void nvavp_clk_ctrl(struct nvavp_info *nvavp, u32 clk_en)
 		clk_disable(nvavp->vde_clk);
 		clk_set_rate(nvavp->emc_clk, 0);
 		clk_set_rate(nvavp->sclk, 0);
-		nvhost_module_idle(nvhost_get_host(nvavp->nvhost_dev)->dev);
-		nvavp->clk_enabled = 0;
+		nvhost_module_idle_ext(nvhost_get_parent(nvavp->nvhost_dev));
 		dev_dbg(&nvavp->nvhost_dev->dev, "%s: resetting emc_clk "
 				"and sclk\n", __func__);
 	}
@@ -374,11 +367,21 @@ static void nvavp_pushbuffer_free(struct nvavp_info *nvavp)
 
 static int nvavp_pushbuffer_init(struct nvavp_info *nvavp)
 {
-	void *ptr;
-	struct nvavp_os_info *os = &nvavp->os_info;
-	struct nv_e276_control *control;
-	u32 temp;
-	int ret;
+	int ret, channel_id;
+
+	for (channel_id = 0; channel_id < NVAVP_NUM_CHANNELS; channel_id++) {
+		ret = nvavp_pushbuffer_alloc(nvavp, channel_id);
+		if (ret) {
+			dev_err(&nvavp->nvhost_dev->dev,
+				"unable to alloc pushbuffer\n");
+			return ret;
+		}
+		nvavp_set_channel_control_area(nvavp, channel_id);
+		if (IS_VIDEO_CHANNEL_ID(channel_id)) {
+			nvavp->syncpt_id = NVSYNCPT_AVP_0;
+			nvavp->syncpt_value = nvhost_syncpt_read_ext(
+				nvavp->nvhost_dev, nvavp->syncpt_id);
+		}
 
 	ret = nvavp_pushbuffer_alloc(nvavp);
 	if (ret) {
@@ -1187,7 +1190,6 @@ static int tegra_nvavp_probe(struct nvhost_device *ndev,
 		return -EINVAL;
 	}
 
-
 	nvavp = kzalloc(sizeof(struct nvavp_info), GFP_KERNEL);
 	if (!nvavp) {
 		dev_err(&ndev->dev, "cannot allocate avp_info\n");
@@ -1195,13 +1197,6 @@ static int tegra_nvavp_probe(struct nvhost_device *ndev,
 	}
 
 	memset(nvavp, 0, sizeof(*nvavp));
-
-	nvavp->nvhost_syncpt = &nvhost_get_host(ndev)->syncpt;
-	if (!nvavp->nvhost_syncpt) {
-		dev_err(&ndev->dev, "cannot get syncpt handle\n");
-		ret = -ENOENT;
-		goto err_get_syncpt;
-	}
 
 	nvavp->nvmap = nvmap_create_client(nvmap_dev, "nvavp_drv");
 	if (IS_ERR_OR_NULL(nvavp->nvmap)) {
