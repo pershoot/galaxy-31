@@ -2,7 +2,7 @@
  * SDIO spec header file
  * Protocol and standard (common) device definitions
  *
- * Copyright (C) 1999-2011, Broadcom Corporation
+ * Copyright (C) 1999-2012, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -22,7 +22,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: sdio.h 288543 2011-10-07 12:15:31Z $
+ * $Id: sdio.h 308973 2012-01-18 04:19:34Z $
  */
 
 #ifndef	_SDIO_H

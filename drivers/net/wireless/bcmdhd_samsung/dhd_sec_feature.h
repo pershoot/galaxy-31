@@ -27,12 +27,41 @@
  * $Id: dhd_sec_feature.h 309548 2012-01-20 01:13:08Z $
  */
 
-#ifdef USE_SECFEATURE
-#include <sec_feature/GlobalConfig.h>
-#include <sec_feature/CustFeature.h>
+/* PROJECTS */
+
+#if defined(CONFIG_MACH_SAMSUNG_ESPRESSO)\
+	|| defined(CONFIG_MACH_SAMSUNG_ESPRESSO_10)
+#define READ_MACADDR
+#define HW_OOB
 #endif
 
-/* PROJECTS */
+/* Q1 also uses this feature */
+#if defined(CONFIG_MACH_U1) || defined(CONFIG_MACH_TRATS)
+#ifdef CONFIG_MACH_Q1_BD
+#define HW_OOB
+#endif
+#define USE_CID_CHECK
+#define WRITE_MACADDR
+#endif
+
+#ifdef CONFIG_ARCH_MSM7X30
+#define HW_OOB
+#define READ_MACADDR
+#endif
+
+#if defined CONFIG_MACH_GC1 || defined CONFIG_MACH_U1_NA_SPR
+#undef USE_CID_CHECK
+#define READ_MACADDR
+#endif
+
+#ifdef CONFIG_MACH_P10
+#define READ_MACADDR
+#endif
+
+#ifdef CONFIG_ARCH_MSM8960
+#undef WIFI_TURNOFF_DELAY
+#define WIFI_TURNOFF_DELAY	200
+#endif
 
 #ifdef CONFIG_ARCH_TEGRA
 #undef OOB_INTR_ONLY
@@ -56,7 +85,7 @@
 
 #if (WLAN_REGION_CODE >= 100) && (WLAN_REGION_CODE < 200) /*EUR*/
 #if (WLAN_REGION_CODE == 101) /*EUR ORG*/
-;/* GAN LITE NAT KEEPALIVE FILTER */
+/* GAN LITE NAT KEEPALIVE FILTER */
 #define GAN_LITE_NAT_KEEPALIVE_FILTER
 #endif
 #endif
@@ -76,22 +105,14 @@
 #define OKC_SUPPORT
 #endif
 
-#ifndef USE_CID_CHECK
-#define USE_CID_CHECK
-#endif
-
-/* for debug */
-#ifdef RSSI_OFFSET
-#undef RSSI_OFFSET
-#define RSSI_OFFSET 8
-#else
-#define RSSI_OFFSET 8
+#ifndef ROAM_AP_ENV_DETECTION
+#define ROAM_AP_ENV_DETECTION
 #endif
 
 #undef WRITE_MACADDR
 #undef READ_MACADDR
 #ifdef CONFIG_BCM4334
-#define RDWR_KORICS_MACADDR
+#define READ_MACADDR
 #else
 #define RDWR_MACADDR
 #endif

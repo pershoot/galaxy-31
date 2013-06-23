@@ -1,12 +1,12 @@
 /*
-* Copyright (C) 1999-2011, Broadcom Corporation
-*
+* Copyright (C) 1999-2012, Broadcom Corporation
+* 
 *      Unless you and Broadcom execute a separate written software license
 * agreement governing use of this software, this software is licensed to you
 * under the terms of the GNU General Public License version 2 (the "GPL"),
 * available at http://www.broadcom.com/licenses/GPLv2.php, with the
 * following added to such license:
-*
+* 
 *      As a special exception, the copyright holders of this software give you
 * permission to link this software with independent modules, and to copy and
 * distribute the resulting executable under terms of your choice, provided that
@@ -14,11 +14,11 @@
 * the license of that module.  An independent module is a module which is not
 * derived from this software.  The special exception does not apply to any
 * modifications of the software.
-*
+* 
 *      Notwithstanding the above, under no circumstances may you combine this
 * software in any way with any other Broadcom software provided under a license
 * other than the GPL, without Broadcom's express prior written consent.
-* $Id: dhd_wlfc.h 294267 2011-11-04 23:41:52Z $
+* $Id: dhd_wlfc.h 361006 2012-10-05 07:45:51Z $
 *
 */
 #ifndef __wlfc_host_driver_definitions_h__
@@ -29,7 +29,7 @@
 
 #define WLFC_HANGER_ITEM_STATE_FREE		1
 #define WLFC_HANGER_ITEM_STATE_INUSE	2
-
+#define WLFC_HANGER_ITEM_STATE_INUSE_SUPPRESSED	3
 #define WLFC_PKTID_HSLOT_MASK			0xffff /* allow 16 bits only */
 #define WLFC_PKTID_HSLOT_SHIFT			8
 
@@ -68,7 +68,8 @@ typedef enum ewlfc_mac_entry_action {
 
 typedef struct wlfc_hanger_item {
 	uint8	state;
-	uint8	pad[3];
+	uint8   gen;
+	uint8	pad[2];
 	uint32	identifier;
 	void*	pkt;
 #ifdef PROP_TXSTATUS_DEBUG
@@ -84,6 +85,7 @@ typedef struct wlfc_hanger {
 	uint32 failed_to_pop;
 	uint32 failed_slotfind;
 	wlfc_hanger_item_t items[1];
+	uint32 slot_pos;
 } wlfc_hanger_t;
 
 #define WLFC_HANGER_SIZE(n)	((sizeof(wlfc_hanger_t) - \
@@ -93,12 +95,15 @@ typedef struct wlfc_hanger {
 #define WLFC_STATE_CLOSE	2
 
 #define WLFC_PSQ_PREC_COUNT		((AC_COUNT + 1) * 2) /* 2 for each AC traffic and bc/mc */
-#define WLFC_PSQ_LEN			64
+
+#define WLFC_PSQ_LEN			2048
+
 #define WLFC_SENDQ_LEN			256
 
-#define WLFC_FLOWCONTROL_DELTA		8
-#define WLFC_FLOWCONTROL_HIWATER	(WLFC_PSQ_LEN - WLFC_FLOWCONTROL_DELTA)
-#define WLFC_FLOWCONTROL_LOWATER	(WLFC_FLOWCONTROL_HIWATER - WLFC_FLOWCONTROL_DELTA)
+
+#define WLFC_FLOWCONTROL_HIWATER	(2048 - 256)
+#define WLFC_FLOWCONTROL_LOWATER	256
+
 
 typedef struct wlfc_mac_descriptor {
 	uint8 occupied;
@@ -123,6 +128,11 @@ typedef struct wlfc_mac_descriptor {
 	/* 1= send on next opportunity */
 	uint8 send_tim_signal;
 	uint8 mac_handle;
+	uint transit_count;
+	uint suppr_transit_count;
+	uint suppress_count;
+    uint8 suppressed;
+
 #ifdef PROP_TXSTATUS_DEBUG
 	uint32 dstncredit_sent_packets;
 	uint32 dstncredit_acks;
@@ -223,7 +233,7 @@ typedef struct athost_wl_status_info {
 	athost_wl_stat_counters_t stats;
 
 	/* the additional ones are for bc/mc and ATIM FIFO */
-	int     FIFO_credit[AC_COUNT + 2];
+	int		FIFO_credit[AC_COUNT + 2];
 
 	/* Credit borrow counts for each FIFO from each of the other FIFOs */
 	int		credits_borrowed[AC_COUNT + 2][AC_COUNT + 2];

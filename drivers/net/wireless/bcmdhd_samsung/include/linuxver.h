@@ -2,14 +2,14 @@
  * Linux-specific abstractions to gain some independence from linux kernel versions.
  * Pave over some 2.2 versus 2.4 versus 2.6 kernel differences.
  *
- * Copyright (C) 1999-2011, Broadcom Corporation
- *
+ * Copyright (C) 1999-2012, Broadcom Corporation
+ * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2 (the "GPL"),
  * available at http://www.broadcom.com/licenses/GPLv2.php, with the
  * following added to such license:
- *
+ * 
  *      As a special exception, the copyright holders of this software give you
  * permission to link this software with independent modules, and to copy and
  * distribute the resulting executable under terms of your choice, provided that
@@ -17,12 +17,12 @@
  * the license of that module.  An independent module is a module which is not
  * derived from this software.  The special exception does not apply to any
  * modifications of the software.
- *
+ * 
  *      Notwithstanding the above, under no circumstances may you combine this
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: linuxver.h 291086 2011-10-21 01:17:24Z $
+ * $Id: linuxver.h 353905 2012-08-29 07:33:08Z $
  */
 
 #ifndef _linuxver_h_
@@ -37,7 +37,7 @@
 #else
 #include <linux/autoconf.h>
 #endif
-#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0) */
+#endif 
 #include <linux/module.h>
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 3, 0))
@@ -47,7 +47,7 @@
 #else
 #define __NO_VERSION__
 #endif
-#endif /* (LINUX_VERSION_CODE < KERNEL_VERSION(2, 3, 0)) */
+#endif	
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 5, 0)
 #define module_param(_name_, _type_, _perm_)	MODULE_PARM(_name_, "i")
@@ -97,12 +97,26 @@
 #endif
 #endif	
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
+#define DAEMONIZE(a) daemonize(a); \
+	allow_signal(SIGKILL); \
+	allow_signal(SIGTERM);
+#else 
+#define RAISE_RX_SOFTIRQ() \
+	cpu_raise_softirq(smp_processor_id(), NET_RX_SOFTIRQ)
+#define DAEMONIZE(a) daemonize(); \
+	do { if (a) \
+		strncpy(current->comm, a, MIN(sizeof(current->comm), (strlen(a)))); \
+	} while (0);
+#endif 
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 19)
 #define	MY_INIT_WORK(_work, _func)	INIT_WORK(_work, _func)
 #else
 #define	MY_INIT_WORK(_work, _func)	INIT_WORK(_work, _func, _work)
 #if !(LINUX_VERSION_CODE == KERNEL_VERSION(2, 6, 18) && defined(RHEL_MAJOR) && \
 	(RHEL_MAJOR == 5))
+
 typedef void (*work_func_t)(void *work);
 #endif
 #endif	
@@ -149,6 +163,10 @@ typedef irqreturn_t(*FN_ISR) (int irq, void *dev_id, struct pt_regs *ptregs);
 #endif
 #endif 
 
+
+#ifdef CUSTOMER_HW4
+#include <linux/kthread.h>
+#endif
 
 #ifndef __exit
 #define __exit
@@ -506,6 +524,19 @@ typedef struct {
 	DBG_THR(("%s thr:%lx started\n", __FUNCTION__, (tsk_ctl)->thr_pid)); \
 }
 
+#ifdef USE_KTHREAD_API
+#define PROC_START2(thread_func, owner, tsk_ctl, flags, name) \
+{ \
+	sema_init(&((tsk_ctl)->sema), 0); \
+	init_completion(&((tsk_ctl)->completed)); \
+	(tsk_ctl)->parent = owner; \
+	(tsk_ctl)->terminated = FALSE; \
+	(tsk_ctl)->p_task  = kthread_run(thread_func, tsk_ctl, (char*)name); \
+	(tsk_ctl)->thr_pid = (tsk_ctl)->p_task->pid; \
+	DBG_THR(("%s thr:%lx created\n", __FUNCTION__, (tsk_ctl)->thr_pid)); \
+}
+#endif
+
 #define PROC_STOP(tsk_ctl) \
 { \
 	(tsk_ctl)->terminated = TRUE; \
@@ -582,6 +613,7 @@ do {									\
 })
 
 #endif 
+
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24))
 #define DEV_PRIV(dev)	(dev->priv)

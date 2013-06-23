@@ -2,7 +2,7 @@
  * Misc utility routines for accessing the SOC Interconnects
  * of Broadcom HNBU chips.
  *
- * Copyright (C) 1999-2011, Broadcom Corporation
+ * Copyright (C) 1999-2012, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -22,7 +22,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: siutils.h 300516 2011-12-04 17:39:44Z $
+ * $Id: siutils.h 347614 2012-07-27 10:24:51Z $
  */
 
 #ifndef	_siutils_h_
@@ -125,6 +125,21 @@ typedef void (*gpio_handler_t)(uint32 stat, void *arg);
 
 
 
+#define SI_CR4_CAP			(0x04)
+#define SI_CR4_BANKIDX		(0x40)
+#define SI_CR4_BANKINFO		(0x44)
+
+#define	ARMCR4_TCBBNB_MASK	0xf0
+#define	ARMCR4_TCBBNB_SHIFT	4
+#define	ARMCR4_TCBANB_MASK	0xf
+#define	ARMCR4_TCBANB_SHIFT	0
+
+#define	SICF_CPUHALT		(0x0020)
+#define	ARMCR4_BSZ_MASK		0x3f
+#define	ARMCR4_BSZ_MULT		8192
+
+
+
 extern si_t *si_attach(uint pcidev, osl_t *osh, void *regs, uint bustype,
                        void *sdh, char **vars, uint *varsz);
 extern si_t *si_kattach(osl_t *osh);
@@ -189,6 +204,7 @@ extern uint32 si_socdevram_remap_size(si_t *sih);
 
 extern void si_watchdog(si_t *sih, uint ticks);
 extern void si_watchdog_ms(si_t *sih, uint32 ms);
+extern uint32 si_watchdog_msticks(void);
 extern void *si_gpiosetcore(si_t *sih);
 extern uint32 si_gpiocontrol(si_t *sih, uint32 mask, uint32 val, uint8 priority);
 extern uint32 si_gpioouten(si_t *sih, uint32 mask, uint32 val, uint8 priority);
@@ -309,4 +325,8 @@ extern int si_pcie_configspace_get(si_t *sih, uint8 *buf, uint size);
 char *si_getnvramflvar(si_t *sih, const char *name);
 
 
+extern uint32 si_tcm_size(si_t *sih);
+
+extern int si_set_sromctl(si_t *sih, uint32 value);
+extern uint32 si_get_sromctl(si_t *sih);
 #endif	

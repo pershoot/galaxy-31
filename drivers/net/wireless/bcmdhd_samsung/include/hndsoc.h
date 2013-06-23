@@ -1,7 +1,7 @@
 /*
  * Broadcom HND chip & on-chip-interconnect-related definitions.
  *
- * Copyright (C) 1999-2011, Broadcom Corporation
+ * Copyright (C) 1999-2012, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: hndsoc.h 283666 2011-09-15 00:27:45Z $
+ * $Id: hndsoc.h 309193 2012-01-19 00:03:57Z $
  */
 
 #ifndef	_HNDSOC_H
